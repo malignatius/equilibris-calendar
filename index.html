@@ -136,6 +136,7 @@
   .special-card {
     flex: 1; min-width: 200px;
     border-radius: 12px; padding: 16px 18px;
+    border: 1px solid var(--border);
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     cursor: pointer;
   }
@@ -275,7 +276,7 @@ const MONTHS = [
   {num:13, name:'Ultimus',    virtue:'Perseverance / Diligence', bg:'#7E57C2', fg:'#FFFFFF', colorName:'Purple',     animal:'Horse',    emoji:'🐴'},
 ];
 const YEAR_DAY = {name:'Year Day', virtue:'Hope / Positivity', bg:'#D4AF37', fg:'#1B1B1B', colorName:'Gold', animal:'Butterfly', emoji:'🦋'};
-const LEAP_DAY = {name:'Leap Day', virtue:'(unthemed — bonus day)', bg:'#D4AF37', fg:'#1B1B1B', colorName:'Gold', animal:null, emoji:null};
+const LEAP_DAY = {name:'Leap Day', virtue:'Cleansing / Self-Reflection', bg:'#FFFFFF', fg:'#1B1B1B', colorName:'White', animal:'Frog', emoji:'🐸'};
 const WEEKDAYS = ['Mo','Tu','We','Th','Fr','Sa','Su'];
 
 // ---------- Core conversion logic ----------
@@ -357,7 +358,7 @@ function eqToDisplay(eq) {
     return {
       eqLine: `${LEAP_DAY.name} — Year ${eq.startYear}–${eq.startYear+1}`,
       virtueText: LEAP_DAY.virtue, bg: LEAP_DAY.bg,
-      animalLine: '',
+      animalLine: `${LEAP_DAY.emoji} ${LEAP_DAY.animal}`,
       gregDate: toGregorian(eq.startYear, null, null, 'LeapDay')
     };
   } else {
@@ -464,6 +465,7 @@ function renderYear(startYear) {
       <div class="special-card${leapDaySelected ? ' selected' : ''}" data-special="LeapDay" data-year="${startYear}" style="background:${LEAP_DAY.bg};color:${LEAP_DAY.fg}">
         <div class="name">${LEAP_DAY.name}</div>
         <div class="virtue">${LEAP_DAY.virtue}</div>
+        <div class="animal-badge">${LEAP_DAY.emoji} ${LEAP_DAY.animal}</div>
         <div class="date">${fmtGreg(leapDayDate)}</div>
       </div>`;
   }
@@ -476,6 +478,7 @@ function renderReference() {
     html += `<tr><td>${m.num}</td><td>${m.name}</td><td>${m.virtue}</td><td>${m.emoji} ${m.animal}</td><td><span class="swatch" style="background:${m.bg}"></span>${m.colorName}</td></tr>`;
   });
   html += `<tr><td>—</td><td>${YEAR_DAY.name}</td><td>${YEAR_DAY.virtue}</td><td>${YEAR_DAY.emoji} ${YEAR_DAY.animal}</td><td><span class="swatch" style="background:${YEAR_DAY.bg}"></span>${YEAR_DAY.colorName}</td></tr>`;
+  html += `<tr><td>—</td><td>${LEAP_DAY.name} (leap years only)</td><td>${LEAP_DAY.virtue}</td><td>${LEAP_DAY.emoji} ${LEAP_DAY.animal}</td><td><span class="swatch" style="background:${LEAP_DAY.bg};border:1px solid var(--border)"></span>${LEAP_DAY.colorName}</td></tr>`;
   document.getElementById('referenceBody').innerHTML = html;
 }
 
@@ -540,7 +543,7 @@ document.getElementById('gregConvertBtn').addEventListener('click', () => {
   if (eq.special === 'YearDay') {
     out.textContent = `${YEAR_DAY.name} of Year ${eq.startYear}–${eq.startYear+1} — ${YEAR_DAY.virtue}`;
   } else if (eq.special === 'LeapDay') {
-    out.textContent = `${LEAP_DAY.name} of Year ${eq.startYear}–${eq.startYear+1}`;
+    out.textContent = `${LEAP_DAY.name} of Year ${eq.startYear}–${eq.startYear+1} — ${LEAP_DAY.virtue}`;
   } else {
     const m = MONTHS[eq.month - 1];
     out.textContent = `${weekdayForDay(eq.day)}, ${m.name} ${eq.day}, Year ${eq.startYear}–${eq.startYear+1} — ${m.virtue}`;
