@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Equilibris Calendar</title>
+<style>
+  :root {
+    --bg: #faf7f2;
+    --card-bg: #ffffff;
+    --ink: #2b2b2b;
+    --muted: #6b6b6b;
+    --border: #e3ddd2;
+    --accent: #b8935f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 32px 20px 80px; }
+  header.page-header { text-align: center; margin-bottom: 32px; }
+  header.page-header h1 {
+    font-size: 2.2rem;
+    margin: 0 0 4px;
+    letter-spacing: 0.02em;
+  }
+  header.page-header p { color: var(--muted); margin: 0; font-size: 0.95rem; }
+
+  section { margin-bottom: 48px; }
+  h2 {
+    font-size: 1.3rem;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 8px;
+    margin-bottom: 20px;
+  }
+
+  /* Today card */
+  #todayCard {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  }
+  #todaySwatch {
+    width: 64px; height: 64px; border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: inset 0 0 0 4px rgba(255,255,255,0.5);
+  }
+  #todayText .eq { font-size: 1.5rem; font-weight: 600; margin-bottom: 4px; }
+  #todayText .virtue { color: var(--accent); font-weight: 500; }
+  #todayText .greg-label {
+    margin-top: 14px; font-size: 0.7rem; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted); font-weight: 600;
+  }
+  #todayText .greg { color: var(--ink); font-size: 0.95rem; margin-top: 2px; }
+  #resetToday {
+    display: none; margin-top: 14px; background: none; border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; cursor: pointer; color: var(--muted);
+  }
+  #resetToday:hover { background: #f0ebe1; }
+
+  /* Year nav */
+  .year-nav {
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    margin-bottom: 24px;
+  }
+  .year-nav button {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+  .year-nav button:hover { background: #f0ebe1; }
+  .year-nav .label { font-weight: 600; font-size: 1.1rem; min-width: 220px; text-align: center; }
+
+  /* Month grid */
+  .month-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 18px;
+  }
+  .month-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .month-card .head {
+    padding: 12px 16px;
+  }
+  .month-card .head .num { font-size: 0.75rem; opacity: 0.85; }
+  .month-card .head .name { font-size: 1.15rem; font-weight: 700; margin: 2px 0; }
+  .month-card .head .virtue { font-size: 0.82rem; font-weight: 500; }
+  .animal-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 8px; padding: 3px 10px; border-radius: 999px;
+    background: rgba(0,0,0,0.12); font-size: 0.72rem; font-weight: 600;
+  }
+  .month-card .range {
+    padding: 8px 16px 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .mini-cal { padding: 10px 14px 14px; }
+  .mini-cal table { width: 100%; border-collapse: collapse; }
+  .mini-cal th {
+    font-size: 0.65rem; color: var(--muted); font-weight: 500; padding: 2px 0;
+  }
+  .mini-cal td {
+    text-align: center; font-size: 0.75rem; padding: 4px 0; border-radius: 4px;
+    cursor: pointer;
+  }
+  .mini-cal td:hover { background: rgba(0,0,0,0.06); }
+  .mini-cal td.today {
+    background: var(--ink); color: white; font-weight: 700;
+  }
+  .mini-cal td.selected {
+    box-shadow: 0 0 0 2px var(--accent) inset; font-weight: 700;
+  }
+  .mini-cal td.today.selected {
+    background: var(--accent); color: white;
+  }
+
+  .special-row { display: flex; gap: 18px; margin-top: 18px; flex-wrap: wrap; }
+  .special-card {
+    flex: 1; min-width: 200px;
+    border-radius: 12px; padding: 16px 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    cursor: pointer;
+  }
+  .special-card.selected { box-shadow: 0 0 0 3px var(--ink) inset; }
+  .special-card .name { font-weight: 700; font-size: 1rem; }
+  .special-card .virtue { font-size: 0.82rem; margin-top: 2px; }
+  .special-card .date { font-size: 0.78rem; margin-top: 6px; opacity: 0.85; }
+
+  /* Converter */
+  .converter-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 700px) { .converter-grid { grid-template-columns: 1fr; } }
+  .converter-box {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .converter-box h3 { margin-top: 0; font-size: 1rem; }
+  .converter-box label { display: block; font-size: 0.85rem; color: var(--muted); margin: 10px 0 4px; }
+  .converter-box input, .converter-box select {
+    width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);
+    font-size: 0.95rem;
+  }
+  .converter-box button {
+    margin-top: 14px; padding: 9px 16px; border-radius: 8px; border: none;
+    background: var(--ink); color: white; cursor: pointer; font-size: 0.9rem;
+  }
+  .converter-box button:hover { opacity: 0.85; }
+  .result-box {
+    margin-top: 14px; padding: 12px 14px; border-radius: 8px; background: #f5f1e8;
+    font-size: 0.9rem; min-height: 20px;
+  }
+
+  .reference-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .reference-table th, .reference-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+  .reference-table .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
+
+  footer { text-align: center; color: var(--muted); font-size: 0.78rem; margin-top: 40px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page-header">
+    <h1>Equilibris Calendar</h1>
+    <p>13 months of 28 days, anchored to the March equinox — plus Year Day (and Leap Day in leap years) outside the grid.</p>
+  </header>
+
+  <section id="today-section">
+    <h2 id="todayHeading">Today</h2>
+    <div id="todayCard">
+      <div id="todaySwatch"></div>
+      <div id="todayText">
+        <div class="eq" id="todayEq"></div>
+        <div class="virtue" id="todayVirtue"></div>
+        <div class="animal-badge" id="todayAnimal"></div>
+        <div class="greg-label">Gregorian Equivalence</div>
+        <div class="greg" id="todayGreg"></div>
+        <button id="resetToday">Back to Today</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="year-section">
+    <h2>Year View</h2>
+    <div class="year-nav">
+      <button id="prevYear">&larr; Prev</button>
+      <div class="label" id="yearLabel"></div>
+      <button id="nextYear">Next &rarr;</button>
+    </div>
+    <div class="month-grid" id="monthGrid"></div>
+    <div class="special-row" id="specialRow"></div>
+  </section>
+
+  <section id="converter-section">
+    <h2>Date Converter</h2>
+    <div class="converter-grid">
+      <div class="converter-box">
+        <h3>Gregorian &rarr; Equilibris</h3>
+        <label for="gregInput">Pick a Gregorian date</label>
+        <input type="date" id="gregInput">
+        <button id="gregConvertBtn">Convert</button>
+        <div class="result-box" id="gregResult"></div>
+      </div>
+      <div class="converter-box">
+        <h3>Equilibris &rarr; Gregorian</h3>
+        <label for="eqMonthSelect">Month</label>
+        <select id="eqMonthSelect"></select>
+        <label for="eqDayInput">Day</label>
+        <input type="number" id="eqDayInput" min="1" max="28" value="1">
+        <label for="eqYearInput">Equilibris year begins in (Gregorian year)</label>
+        <input type="number" id="eqYearInput" min="1902" max="2099" value="2026">
+        <button id="eqConvertBtn">Convert</button>
+        <div class="result-box" id="eqResult"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="reference-section">
+    <h2>Reference</h2>
+    <table class="reference-table">
+      <thead><tr><th>#</th><th>Name</th><th>Virtue</th><th>Animal</th><th>Color</th></tr></thead>
+      <tbody id="referenceBody"></tbody>
+    </table>
+  </section>
+
+  <footer>
+    Equinox dates are looked up (not recalculated) for Gregorian years 1901–2100, sourced from published astronomical tables (UTC, day-level precision). Year selector is kept within 1902–2099 so both neighboring equinoxes are always available.
+  </footer>
+
+</div>
+
+<script>
+// ---------- Equinox lookup data (March day-of-month, UTC) ----------
+const EQUINOX_START_YEAR = 1901;
+const EQUINOX_END_YEAR = 2100;
+const EQUINOX_MARCH_DAY = [21,21,21,21,21,21,21,21,21,21,21,20,21,21,21,20,21,21,21,20,21,21,21,20,21,21,21,20,21,21,21,20,21,21,21,20,21,21,21,20,21,21,21,20,20,21,21,20,20,21,21,20,20,21,21,20,20,21,21,20,20,21,21,20,20,21,21,20,20,21,21,20,20,21,21,20,20,20,21,20,20,20,21,20,20,20,21,20,20,20,21,20,20,20,21,20,20,20,21,20,20,20,21,20,20,20,21,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,19,20,20,20,19,20,20,20,19,20,20,20,19,20,20,20,19,20,20,20,19,20,20,20,19,20,20,20,19,20,20,20,19,19,20,20,19,19,20,20,19,19,20,20,19,19,20,20,19,19,20,20,19,19,20,20,20];
+
+// ---------- Month data ----------
+const MONTHS = [
+  {num:1,  name:'Primus',     virtue:'Justice / Balance',        bg:'#66BB6A', fg:'#1B1B1B', colorName:'Green',      animal:'Wolf',     emoji:'🐺'},
+  {num:2,  name:'Secundus',   virtue:'Creativity / Curiosity',   bg:'#B39DDB', fg:'#1B1B1B', colorName:'Lavender',   animal:'Cat',      emoji:'🐱'},
+  {num:3,  name:'Tertius',    virtue:'Harmony / Peacefulness',   bg:'#81D4FA', fg:'#1B1B1B', colorName:'Light Blue', animal:'Dove',     emoji:'🕊️'},
+  {num:4,  name:'Quartus',    virtue:'Courage / Bravery',        bg:'#FDD835', fg:'#1B1B1B', colorName:'Yellow',     animal:'Lion',     emoji:'🦁'},
+  {num:5,  name:'Quintus',    virtue:'Patience / Modesty',       bg:'#26A69A', fg:'#FFFFFF', colorName:'Teal',       animal:'Elephant', emoji:'🐘'},
+  {num:6,  name:'Sextus',     virtue:'Passion / Zest',           bg:'#E53935', fg:'#FFFFFF', colorName:'Red',        animal:'Fox',      emoji:'🦊'},
+  {num:7,  name:'September',  virtue:'Wit / Wisdom',             bg:'#8D6E63', fg:'#FFFFFF', colorName:'Brown',      animal:'Owl',      emoji:'🦉'},
+  {num:8,  name:'October',    virtue:'Humor / Mirth',            bg:'#FB8C00', fg:'#1B1B1B', colorName:'Orange',     animal:'Monkey',   emoji:'🐒'},
+  {num:9,  name:'November',   virtue:'Gratitude / Humility',     bg:'#8E2436', fg:'#FFFFFF', colorName:'Burgundy',   animal:'Mouse',    emoji:'🐭'},
+  {num:10, name:'December',   virtue:'Forgiveness / Kindness',   bg:'#1A237E', fg:'#FFFFFF', colorName:'Navy',       animal:'Deer',     emoji:'🦌'},
+  {num:11, name:'Undecimus',  virtue:'Loyalty / Sincerity',      bg:'#B0BEC5', fg:'#1B1B1B', colorName:'Silver',     animal:'Dog',      emoji:'🐶'},
+  {num:12, name:'Penultimus', virtue:'Love / Compassion',        bg:'#F06292', fg:'#1B1B1B', colorName:'Pink',       animal:'Swan',     emoji:'🦢'},
+  {num:13, name:'Ultimus',    virtue:'Perseverance / Diligence', bg:'#7E57C2', fg:'#FFFFFF', colorName:'Purple',     animal:'Horse',    emoji:'🐴'},
+];
+const YEAR_DAY = {name:'Year Day', virtue:'Hope / Positivity', bg:'#D4AF37', fg:'#1B1B1B', colorName:'Gold', animal:'Butterfly', emoji:'🦋'};
+const LEAP_DAY = {name:'Leap Day', virtue:'(unthemed — bonus day)', bg:'#D4AF37', fg:'#1B1B1B', colorName:'Gold', animal:null, emoji:null};
+const WEEKDAYS = ['Mo','Tu','We','Th','Fr','Sa','Su'];
+
+// ---------- Core conversion logic ----------
+function getEquinoxDate(year) {
+  if (year < EQUINOX_START_YEAR || year > EQUINOX_END_YEAR) return null;
+  const day = EQUINOX_MARCH_DAY[year - EQUINOX_START_YEAR];
+  return new Date(Date.UTC(year, 2, day));
+}
+function dayDiff(a, b) { return Math.round((a - b) / 86400000); }
+
+function toEquilibris(gregDate) {
+  const y = gregDate.getUTCFullYear();
+  let eqThis = getEquinoxDate(y);
+  let startYear;
+  if (eqThis && gregDate >= eqThis) {
+    startYear = y;
+  } else {
+    startYear = y - 1;
+    eqThis = getEquinoxDate(startYear);
+  }
+  if (!eqThis) return null;
+  const eqNext = getEquinoxDate(startYear + 1);
+  if (!eqNext) return null;
+  const dayOffset = dayDiff(gregDate, eqThis);
+  const yearLength = dayDiff(eqNext, eqThis);
+  let month=null, day=null, special=null;
+  if (dayOffset < 364) {
+    month = Math.floor(dayOffset/28)+1;
+    day = (dayOffset%28)+1;
+  } else if (dayOffset === 364) {
+    special = 'YearDay';
+  } else if (dayOffset === 365) {
+    special = 'LeapDay';
+  }
+  return {startYear, dayOffset, yearLength, month, day, special};
+}
+
+function toGregorian(startYear, month, day, special) {
+  const eqThis = getEquinoxDate(startYear);
+  if (!eqThis) return null;
+  let offset;
+  if (special === 'YearDay') offset = 364;
+  else if (special === 'LeapDay') offset = 365;
+  else offset = (month-1)*28 + (day-1);
+  const d = new Date(eqThis);
+  d.setUTCDate(d.getUTCDate() + offset);
+  return d;
+}
+
+function fmtGreg(d) {
+  return d.toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric', timeZone:'UTC' });
+}
+function fmtGregShort(d) {
+  return d.toLocaleDateString(undefined, { month:'short', day:'numeric', timeZone:'UTC' });
+}
+const WEEKDAY_FULL = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+function weekdayForDay(day) {
+  return WEEKDAY_FULL[(day - 1) % 7];
+}
+
+// ---------- Rendering ----------
+let currentStartYear;
+let selectedInfo = null; // null = "showing today"; otherwise {startYear, month, day, special}
+
+function getTodayUtc() {
+  const now = new Date();
+  return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+}
+
+function eqToDisplay(eq) {
+  if (eq.special === 'YearDay') {
+    return {
+      eqLine: `${YEAR_DAY.name} — Year ${eq.startYear}–${eq.startYear+1}`,
+      virtueText: YEAR_DAY.virtue, bg: YEAR_DAY.bg,
+      animalLine: `${YEAR_DAY.emoji} ${YEAR_DAY.animal}`,
+      gregDate: toGregorian(eq.startYear, null, null, 'YearDay')
+    };
+  } else if (eq.special === 'LeapDay') {
+    return {
+      eqLine: `${LEAP_DAY.name} — Year ${eq.startYear}–${eq.startYear+1}`,
+      virtueText: LEAP_DAY.virtue, bg: LEAP_DAY.bg,
+      animalLine: '',
+      gregDate: toGregorian(eq.startYear, null, null, 'LeapDay')
+    };
+  } else {
+    const m = MONTHS[eq.month - 1];
+    return {
+      eqLine: `${weekdayForDay(eq.day)}, ${m.name} ${eq.day} — Year ${eq.startYear}–${eq.startYear+1}`,
+      virtueText: m.virtue, bg: m.bg,
+      animalLine: `${m.emoji} Month of the ${m.animal}`,
+      gregDate: toGregorian(eq.startYear, eq.month, eq.day, null)
+    };
+  }
+}
+
+function renderCard() {
+  const isToday = !selectedInfo;
+  const eq = isToday ? toEquilibris(getTodayUtc()) : selectedInfo;
+
+  document.getElementById('todayHeading').textContent = isToday ? 'Today' : 'Selected Date';
+  document.getElementById('resetToday').style.display = isToday ? 'none' : 'inline-block';
+
+  if (!eq) {
+    document.getElementById('todayEq').textContent = 'Outside supported range (1902–2099)';
+    document.getElementById('todayVirtue').textContent = '';
+    document.getElementById('todayAnimal').textContent = '';
+    document.getElementById('todayGreg').textContent = '';
+    return;
+  }
+  const disp = eqToDisplay(eq);
+  document.getElementById('todayEq').textContent = disp.eqLine;
+  document.getElementById('todayVirtue').textContent = disp.virtueText;
+  document.getElementById('todayAnimal').textContent = disp.animalLine;
+  document.getElementById('todayAnimal').style.display = disp.animalLine ? 'inline-flex' : 'none';
+  document.getElementById('todayGreg').textContent = fmtGreg(disp.gregDate);
+  document.getElementById('todaySwatch').style.background = disp.bg;
+}
+
+function buildMiniCalTable(monthNum, startYear, todayEq) {
+  let html = '<table><thead><tr>' + WEEKDAYS.map(w => `<th>${w}</th>`).join('') + '</tr></thead><tbody>';
+  for (let row = 0; row < 4; row++) {
+    html += '<tr>';
+    for (let col = 0; col < 7; col++) {
+      const day = row*7 + col + 1;
+      const isToday = todayEq && !todayEq.special && todayEq.startYear === startYear && todayEq.month === monthNum && todayEq.day === day;
+      const isSelected = selectedInfo && !selectedInfo.special && selectedInfo.startYear === startYear && selectedInfo.month === monthNum && selectedInfo.day === day;
+      const cls = [isToday ? 'today' : '', isSelected ? 'selected' : ''].filter(Boolean).join(' ');
+      html += `<td class="${cls}" data-month="${monthNum}" data-day="${day}" data-year="${startYear}">${day}</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  return html;
+}
+
+function renderYear(startYear) {
+  currentStartYear = startYear;
+  const eqThis = getEquinoxDate(startYear);
+  const eqNext = getEquinoxDate(startYear + 1);
+  document.getElementById('yearLabel').textContent = `Year ${startYear} → ${startYear+1}`;
+
+  const now = new Date();
+  const utcToday = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  const todayEq = toEquilibris(utcToday);
+
+  if (!eqThis || !eqNext) {
+    document.getElementById('monthGrid').innerHTML = '<p>Year out of supported range (1902–2099).</p>';
+    document.getElementById('specialRow').innerHTML = '';
+    return;
+  }
+
+  const yearLength = dayDiff(eqNext, eqThis);
+  const isLeap = yearLength === 366;
+
+  let gridHtml = '';
+  MONTHS.forEach(m => {
+    const startD = toGregorian(startYear, m.num, 1, null);
+    const endD = toGregorian(startYear, m.num, 28, null);
+    gridHtml += `
+      <div class="month-card">
+        <div class="head" style="background:${m.bg};color:${m.fg}">
+          <div class="num">Month ${m.num}</div>
+          <div class="name">${m.name}</div>
+          <div class="virtue">${m.virtue}</div>
+          <div class="animal-badge">${m.emoji} Month of the ${m.animal}</div>
+        </div>
+        <div class="range">${fmtGregShort(startD)} – ${fmtGregShort(endD)}</div>
+        <div class="mini-cal">${buildMiniCalTable(m.num, startYear, todayEq)}</div>
+      </div>`;
+  });
+  document.getElementById('monthGrid').innerHTML = gridHtml;
+
+  const yearDayDate = toGregorian(startYear, null, null, 'YearDay');
+  const yearDaySelected = selectedInfo && selectedInfo.special === 'YearDay' && selectedInfo.startYear === startYear;
+  let specialHtml = `
+    <div class="special-card${yearDaySelected ? ' selected' : ''}" data-special="YearDay" data-year="${startYear}" style="background:${YEAR_DAY.bg};color:${YEAR_DAY.fg}">
+      <div class="name">${YEAR_DAY.name}</div>
+      <div class="virtue">${YEAR_DAY.virtue}</div>
+      <div class="animal-badge">${YEAR_DAY.emoji} ${YEAR_DAY.animal}</div>
+      <div class="date">${fmtGreg(yearDayDate)}</div>
+    </div>`;
+  if (isLeap) {
+    const leapDayDate = toGregorian(startYear, null, null, 'LeapDay');
+    const leapDaySelected = selectedInfo && selectedInfo.special === 'LeapDay' && selectedInfo.startYear === startYear;
+    specialHtml += `
+      <div class="special-card${leapDaySelected ? ' selected' : ''}" data-special="LeapDay" data-year="${startYear}" style="background:${LEAP_DAY.bg};color:${LEAP_DAY.fg}">
+        <div class="name">${LEAP_DAY.name}</div>
+        <div class="virtue">${LEAP_DAY.virtue}</div>
+        <div class="date">${fmtGreg(leapDayDate)}</div>
+      </div>`;
+  }
+  document.getElementById('specialRow').innerHTML = specialHtml;
+}
+
+function renderReference() {
+  let html = '';
+  MONTHS.forEach(m => {
+    html += `<tr><td>${m.num}</td><td>${m.name}</td><td>${m.virtue}</td><td>${m.emoji} ${m.animal}</td><td><span class="swatch" style="background:${m.bg}"></span>${m.colorName}</td></tr>`;
+  });
+  html += `<tr><td>—</td><td>${YEAR_DAY.name}</td><td>${YEAR_DAY.virtue}</td><td>${YEAR_DAY.emoji} ${YEAR_DAY.animal}</td><td><span class="swatch" style="background:${YEAR_DAY.bg}"></span>${YEAR_DAY.colorName}</td></tr>`;
+  document.getElementById('referenceBody').innerHTML = html;
+}
+
+function populateEqMonthSelect() {
+  const sel = document.getElementById('eqMonthSelect');
+  let html = '';
+  MONTHS.forEach(m => { html += `<option value="${m.num}">${m.num}. ${m.name}</option>`; });
+  html += `<option value="YearDay">Year Day</option>`;
+  html += `<option value="LeapDay">Leap Day</option>`;
+  sel.innerHTML = html;
+  sel.addEventListener('change', () => {
+    const dayInput = document.getElementById('eqDayInput');
+    const isSpecial = sel.value === 'YearDay' || sel.value === 'LeapDay';
+    dayInput.disabled = isSpecial;
+    dayInput.style.opacity = isSpecial ? 0.4 : 1;
+  });
+}
+
+// ---------- Event wiring ----------
+document.getElementById('prevYear').addEventListener('click', () => renderYear(currentStartYear - 1));
+document.getElementById('nextYear').addEventListener('click', () => renderYear(currentStartYear + 1));
+
+document.getElementById('monthGrid').addEventListener('click', (e) => {
+  const td = e.target.closest('td[data-month]');
+  if (!td) return;
+  selectedInfo = {
+    startYear: parseInt(td.dataset.year, 10),
+    month: parseInt(td.dataset.month, 10),
+    day: parseInt(td.dataset.day, 10),
+    special: null
+  };
+  renderCard();
+  renderYear(currentStartYear);
+});
+
+document.getElementById('specialRow').addEventListener('click', (e) => {
+  const card = e.target.closest('.special-card[data-special]');
+  if (!card) return;
+  selectedInfo = {
+    startYear: parseInt(card.dataset.year, 10),
+    month: null,
+    day: null,
+    special: card.dataset.special
+  };
+  renderCard();
+  renderYear(currentStartYear);
+});
+
+document.getElementById('resetToday').addEventListener('click', () => {
+  selectedInfo = null;
+  renderCard();
+  renderYear(currentStartYear);
+});
+
+document.getElementById('gregConvertBtn').addEventListener('click', () => {
+  const val = document.getElementById('gregInput').value;
+  const out = document.getElementById('gregResult');
+  if (!val) { out.textContent = 'Pick a date first.'; return; }
+  const d = new Date(val + 'T00:00:00Z');
+  const eq = toEquilibris(d);
+  if (!eq) { out.textContent = 'Date is outside the supported equinox range (1902–2099).'; return; }
+  if (eq.special === 'YearDay') {
+    out.textContent = `${YEAR_DAY.name} of Year ${eq.startYear}–${eq.startYear+1} — ${YEAR_DAY.virtue}`;
+  } else if (eq.special === 'LeapDay') {
+    out.textContent = `${LEAP_DAY.name} of Year ${eq.startYear}–${eq.startYear+1}`;
+  } else {
+    const m = MONTHS[eq.month - 1];
+    out.textContent = `${weekdayForDay(eq.day)}, ${m.name} ${eq.day}, Year ${eq.startYear}–${eq.startYear+1} — ${m.virtue}`;
+  }
+});
+
+document.getElementById('eqConvertBtn').addEventListener('click', () => {
+  const monthVal = document.getElementById('eqMonthSelect').value;
+  const dayVal = parseInt(document.getElementById('eqDayInput').value, 10);
+  const yearVal = parseInt(document.getElementById('eqYearInput').value, 10);
+  const out = document.getElementById('eqResult');
+  let special = null, month = null;
+  if (monthVal === 'YearDay') special = 'YearDay';
+  else if (monthVal === 'LeapDay') special = 'LeapDay';
+  else month = parseInt(monthVal, 10);
+
+  if (special === 'LeapDay') {
+    const eqThis = getEquinoxDate(yearVal);
+    const eqNext = getEquinoxDate(yearVal + 1);
+    if (eqThis && eqNext && dayDiff(eqNext, eqThis) !== 366) {
+      out.textContent = `Year ${yearVal}–${yearVal+1} is not a leap year — it has no Leap Day.`;
+      return;
+    }
+  }
+  if (!special && (dayVal < 1 || dayVal > 28 || isNaN(dayVal))) {
+    out.textContent = 'Day must be between 1 and 28.';
+    return;
+  }
+  const d = toGregorian(yearVal, month, dayVal, special);
+  if (!d) { out.textContent = 'Year is outside the supported range (1902–2099).'; return; }
+  out.textContent = fmtGreg(d);
+});
+
+// ---------- Init ----------
+populateEqMonthSelect();
+renderReference();
+renderCard();
+
+(function initYear() {
+  const utcToday = getTodayUtc();
+  const eq = toEquilibris(utcToday);
+  renderYear(eq ? eq.startYear : utcToday.getUTCFullYear());
+})();
+</script>
+</body>
+</html>
